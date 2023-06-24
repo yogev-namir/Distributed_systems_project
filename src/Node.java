@@ -3,6 +3,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import static java.lang.Thread.sleep;
 
 public class Node implements Runnable {
     private int id;
@@ -46,7 +49,7 @@ public class Node implements Runnable {
             for (Integer port : smallerNeighbors)
                 sendMessage(this.color, port);
         } else {
-            reciveFromHigher();
+            receiveFromHigher();
             waitNeighbors();
             minimalNonConflictingColor();
             for (Integer port : smallerNeighbors)
@@ -54,10 +57,23 @@ public class Node implements Runnable {
         }
     }
 
-    private void reciveFromHigher() {
+    private void receiveFromHigher() {
+        CopyOnWriteArrayList<Thread> receivingList = new CopyOnWriteArrayList<>();
         for (Integer port : this.largerNeighbors){
             Thread thread = new Thread(() -> receiveMessage(port));
+            receivingList.add(thread);
             thread.start();
+            try{
+                sleep(1);
+            } catch (InterruptedException ignored){
+            }
+        }
+        for (Thread thread : receivingList) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
