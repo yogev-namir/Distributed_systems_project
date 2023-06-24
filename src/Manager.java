@@ -13,7 +13,8 @@ public class Manager {
     private int delta;
     private StringBuilder output;
     public Manager() {
-        this.nodes_array = new ArrayList<Node>();
+        this.nodes_array = new ArrayList<>();
+        this.threads = new ArrayList<>();
     }
 
     public void readInput(String path) {
@@ -34,10 +35,10 @@ public class Manager {
                 int[][] neighborsArr = new int[parts.length][3];
                 for (int j = 0; j < parts.length; j++) {
                     String[] neighborParts = parts[j].substring(0, parts[j].length() - 1).split(", ");
-                    int neighborId = Integer.parseInt(neighborParts[0].trim());
+                    int neighborID = Integer.parseInt(neighborParts[0].trim());
                     int writingPort = Integer.parseInt(neighborParts[1].trim());
                     int readingPort = Integer.parseInt(neighborParts[2].trim());
-                    neighborsArr[j] = new int[]{neighborId, writingPort, readingPort};
+                    neighborsArr[j] = new int[]{neighborID, writingPort, readingPort};
                 }
                 Node new_node = new Node(nodeId, this.nodes_number, this.delta, neighborsArr);
                 this.nodes_array.add(new_node);
