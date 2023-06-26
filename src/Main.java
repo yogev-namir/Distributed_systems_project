@@ -11,9 +11,9 @@ public class Main {
     static final String FAILED = "termination failed";
 
     static final String DIR_PATH = "inputFiles/";
-//    static final String[] FILES = {"input1.txt", "input2.txt"};
+    static final String[] FILES = {"input1.txt", "input2.txt"};
 //    static final String[] FILES = {"tiny/input1.txt", "tiny/input2.txt","tiny/input3.txt"};
-    static final String[] FILES = {"medium/input3.txt"};
+//    static final String[] FILES = {"medium/input3.txt"};
 
 
     public static void main(String[] args) {

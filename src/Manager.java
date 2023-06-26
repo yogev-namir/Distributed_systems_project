@@ -12,10 +12,12 @@ public class Manager {
     private int nodes_number;
     private int delta;
     private StringBuilder output;
+    private int timeExcepition;
 
     public Manager() {
         this.nodes_array = new ArrayList<>();
         this.threads = new ArrayList<>();
+        this.timeExcepition = 0;
     }
 
     public void readInput(String path) {
@@ -73,14 +75,19 @@ public class Manager {
         // Output builder
         output = new StringBuilder();
         for (Node node : nodes_array){
-            output.append("Node ID: ").append(node.getId()).
-                    append(", Color: ").append(node.getColor()).append("\n");
+            output.append(node.getId()).append(",").append(node.getColor()).append("\n");
         }
+        this.timeExcepition=1;
         return output.toString();
     }
 
     public String terminate() {
+        if (this.timeExcepition==1){ return "";}
         // your code here
-        return "coloring massage in output format";
+        output = new StringBuilder();
+        for (Node node : nodes_array){
+            output.append(node.getId()).append(",").append(node.getColor()).append("\n");
+        }
+        return output.toString();
     }
 }

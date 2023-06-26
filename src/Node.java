@@ -1,3 +1,134 @@
+// TCP Implementation
+import java.io.*;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+public class Node implements Runnable {
+    private int id;
+    private int color;
+    private int numNodes;
+    private int maxDeg;
+    private List<Integer> neighborsColors;
+    // keeping the ports of the neighbours with a higher ID
+    private ArrayList<Integer> largerNeighbors;
+    // keeping the ports of the neighbours with a lower ID
+    private ArrayList<Integer> smallerNeighbors;
+    //keeping the colors of all the neighbours
+    private ArrayList<Integer> neighboursColors;
+
+    public Node(int id, int numNodes, int maxDeg, int[][] neighbors) {
+        this.id = id;
+        this.color = id;
+        this.numNodes = numNodes;
+        this.maxDeg = maxDeg;
+        this.neighborsColors = new ArrayList<>();
+        this.largerNeighbors = new ArrayList<>();
+        this.smallerNeighbors = new ArrayList<>();
+        for (int[] neighbor : neighbors) {
+            int neighborID = neighbor[0];
+            if (neighborID > this.id) {
+                // For receiving messages
+                int neighborOutputPort = neighbor[2];
+                this.largerNeighbors.add(neighborOutputPort);
+            } else {
+                // For sending messages
+                int neighborInputPort = neighbor[1];
+                this.smallerNeighbors.add(neighborInputPort);
+            }
+        }
+    }
+
+    public void run() {
+//        System.out.print("\nNode "+this.id+" invoked");
+        // True if this Node is has the highest ID among its neighbours
+        if (this.largerNeighbors.size() == 0) {
+            this.color = 0;
+            // All of its neighbours are 'smaller'
+            for (Integer port : smallerNeighbors) {
+//                System.out.print("\nNode " + this.id + " sending " +
+//                        this.color+" to port "+port);
+                sendMessage(this.color, port);
+            }
+        } else {
+            receiveMessages();
+            setMinimalNonConflictingColor();
+            for (Integer port : smallerNeighbors)
+                sendMessage(this.color, port);
+        }
+    }
+
+    private void receiveMessages() {
+        CopyOnWriteArrayList<Thread> receivingList = new CopyOnWriteArrayList<>();
+        for (Integer port : this.largerNeighbors){
+            Thread thread = new Thread(() -> receiveMessage(port));
+            receivingList.add(thread);
+            thread.start();
+            try{
+                Thread.sleep(2);
+            } catch (InterruptedException ignored){
+            }
+        }
+        for (Thread thread : receivingList) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void receiveMessage(int receiverPort) {
+        try {
+            ServerSocket serverSocket = new ServerSocket(receiverPort);
+            Socket socket = serverSocket.accept();
+            ObjectInputStream objectInput = new ObjectInputStream(socket.getInputStream());
+            int receivedColor = (int) objectInput.readObject();
+            socket.close();
+            serverSocket.close();
+            neighborsColors.add(receivedColor);
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendMessage(int message, int receiverPort) {
+        try {
+            Socket socket = new Socket("localhost", receiverPort);
+            ObjectOutputStream objectOutput = new ObjectOutputStream(socket.getOutputStream());
+            objectOutput.writeObject(message);
+            objectOutput.flush();
+            objectOutput.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getColor() {
+        return color;
+    }
+
+    private void setMinimalNonConflictingColor() {
+        int minimalColor = 0;
+        while (neighborsColors.contains(minimalColor)) {
+            minimalColor++;
+        }
+        color = minimalColor;
+    }
+
+    public int getNodeId() {
+        return id;
+    }
+
+    public int getId() {
+        return this.id;
+    }
+}
+
+
+// UDP Implementation
 //import java.io.*;
 //import java.net.*;
 //import java.util.ArrayList;
@@ -204,130 +335,4 @@
 //
 //}
 
-import java.io.*;
-import java.net.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-public class Node implements Runnable {
-    private int id;
-    private int color;
-    private int numNodes;
-    private int maxDeg;
-    private List<Integer> neighborsColors;
-    // keeping the ports of the neighbours with a higher ID
-    private ArrayList<Integer> largerNeighbors;
-    // keeping the ports of the neighbours with a lower ID
-    private ArrayList<Integer> smallerNeighbors;
-    //keeping the colors of all the neighbours
-    private ArrayList<Integer> neighboursColors;
-
-    public Node(int id, int numNodes, int maxDeg, int[][] neighbors) {
-        this.id = id;
-        this.color = id;
-        this.numNodes = numNodes;
-        this.maxDeg = maxDeg;
-        this.neighborsColors = new ArrayList<>();
-        this.largerNeighbors = new ArrayList<>();
-        this.smallerNeighbors = new ArrayList<>();
-        for (int[] neighbor : neighbors) {
-            int neighborID = neighbor[0];
-            if (neighborID > this.id) {
-                // For receiving messages
-                int neighborOutputPort = neighbor[2];
-                this.largerNeighbors.add(neighborOutputPort);
-            } else {
-                // For sending messages
-                int neighborInputPort = neighbor[1];
-                this.smallerNeighbors.add(neighborInputPort);
-            }
-        }
-    }
-
-    public void run() {
-        System.out.print("\nNode "+this.id+" invoked");
-        // True if this Node is has the highest ID among its neighbours
-        if (this.largerNeighbors.size() == 0) {
-            this.color = 0;
-            // All of its neighbours are 'smaller'
-            for (Integer port : smallerNeighbors) {
-                System.out.print("\nNode " + this.id + " sending " +
-                        this.color+" to port "+port);
-                sendMessage(this.color, port);
-            }
-        } else {
-            receiveMessages();
-            setMinimalNonConflictingColor();
-            for (Integer port : smallerNeighbors)
-                sendMessage(this.color, port);
-        }
-    }
-
-    private void receiveMessages() {
-        CopyOnWriteArrayList<Thread> receivingList = new CopyOnWriteArrayList<>();
-        for (Integer port : this.largerNeighbors){
-            Thread thread = new Thread(() -> receiveMessage(port));
-            receivingList.add(thread);
-            thread.start();
-            try{
-                Thread.sleep(2);
-            } catch (InterruptedException ignored){
-            }
-        }
-        for (Thread thread : receivingList) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void receiveMessage(int receiverPort) {
-        try {
-            ServerSocket serverSocket = new ServerSocket(receiverPort);
-            Socket socket = serverSocket.accept();
-            ObjectInputStream objectInput = new ObjectInputStream(socket.getInputStream());
-            int receivedColor = (int) objectInput.readObject();
-            socket.close();
-            serverSocket.close();
-            neighborsColors.add(receivedColor);
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void sendMessage(int message, int receiverPort) {
-        try {
-            Socket socket = new Socket("localhost", receiverPort);
-            ObjectOutputStream objectOutput = new ObjectOutputStream(socket.getOutputStream());
-            objectOutput.writeObject(message);
-            objectOutput.flush();
-            objectOutput.close();
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public int getColor() {
-        return color;
-    }
-
-    private void setMinimalNonConflictingColor() {
-        int minimalColor = 0;
-        while (neighborsColors.contains(minimalColor)) {
-            minimalColor++;
-        }
-        color = minimalColor;
-    }
-
-    public int getNodeId() {
-        return id;
-    }
-
-    public int getId() {
-        return this.id;
-    }
-}
