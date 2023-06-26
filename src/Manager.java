@@ -12,6 +12,7 @@ public class Manager {
     private int nodes_number;
     private int delta;
     private StringBuilder output;
+
     public Manager() {
         this.nodes_array = new ArrayList<>();
         this.threads = new ArrayList<>();
@@ -30,14 +31,14 @@ public class Manager {
             for (int i = 0; i < this.nodes_number; i++) {
                 String line = reader.readLine().trim();
                 int nodeId = Integer.parseInt(line.substring(0, line.indexOf(" ")));
-                String neighbors = line.substring(4, line.lastIndexOf("]]"));
+                String neighbors = line.substring(line.indexOf("[[")+2, line.lastIndexOf("]]"));
                 String[] parts = neighbors.split("], \\[");
                 int[][] neighborsArr = new int[parts.length][3];
                 for (int j = 0; j < parts.length; j++) {
-                    String[] neighborParts = parts[j].substring(0, parts[j].length() - 1).split(", ");
-                    int neighborID = Integer.parseInt(neighborParts[0].trim());
-                    int writingPort = Integer.parseInt(neighborParts[1].trim());
-                    int readingPort = Integer.parseInt(neighborParts[2].trim());
+                    String[] neighborParts = parts[j].substring(0, parts[j].length()).split(", ");
+                    int neighborID = Integer.parseInt(neighborParts[0]);
+                    int writingPort = Integer.parseInt(neighborParts[1]);
+                    int readingPort = Integer.parseInt(neighborParts[2]);
                     neighborsArr[j] = new int[]{neighborID, writingPort, readingPort};
                 }
                 Node new_node = new Node(nodeId, this.nodes_number, this.delta, neighborsArr);
